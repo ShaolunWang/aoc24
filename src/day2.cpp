@@ -1,15 +1,14 @@
 #include "day2.h"
-#include <algorithm>
 #include <fstream>
 #include <print>
 #include <sstream>
 #include <vector>
 
-bool Day2::safetyCompgt(const int &a, const int &b) {
+bool Day2::safetyCompgt(const int& a, const int& b) {
   bool check = (b - a >= 1) && (b - a <= 3);
   return check;
 }
-bool Day2::safetyComplt(const int &a, const int &b) {
+bool Day2::safetyComplt(const int& a, const int& b) {
   bool check = (a - b >= 1) && (a - b <= 3);
   return check;
 }
@@ -60,17 +59,16 @@ int Day2::solve_pt1() {
       }
     }
     if (is_safe) {
-
       count++;
     }
   }
   return count;
 }
 int Day2::solve_pt2() {
-
   int count = 0;
   for (std::vector<int> report : all_reports) {
     int bad_level_counter{0};
+    size_t bad_idx{0};
     bool is_safe = true;
     bool is_monotone_inc{false};
     if (report.size() == 2 && (safetyComplt(report[0], report[1]) ||
@@ -90,24 +88,44 @@ int Day2::solve_pt2() {
         is_safe = is_safe && safetyComplt(report[i], report[i - 1]);
       }
       if (!is_safe) {
-        if (bad_level_counter == 1) {
+        if (bad_level_counter >= 1) {
           break;
         }
         // left end:
-        if (i < report.size() - 2) {
-          // try removing i - 1
+        if (i == 1) {
           if (is_monotone_inc) {
-            is_safe = safetyComplt(report[i + 1], report[i - 1]);
+            is_safe = safetyCompgt(report[i + 1], report[i]);
           } else {
+            is_safe = safetyComplt(report[i + 1], report[i]);
+          }
+          // reverse it if we are removing the first element
+          if (!is_safe) {
+            is_monotone_inc = !is_monotone_inc;
+            if (is_monotone_inc) {
+              is_safe = safetyComplt(report[i + 1], report[i]);
+            } else {
+              is_safe = safetyCompgt(report[i + 1], report[i]);
+            }
+          }
+        } else if (i <= report.size() - 2) {
+          // try removing i
+          if (is_monotone_inc) {
             is_safe = safetyCompgt(report[i + 1], report[i - 1]);
+          } else {
+            is_safe = safetyComplt(report[i + 1], report[i - 1]);
           }
         } else {
           is_safe = true;
         }
 
-        if (is_safe) {
+        if (is_safe && i > 1) {
           bad_level_counter++;
+          bad_idx = i;
           i = i + 2;
+        } else if (i == 1) {
+          i += 1;
+          bad_level_counter++;
+          bad_idx = i;
         } else {
           break;
         }
@@ -116,7 +134,6 @@ int Day2::solve_pt2() {
 
     // is the level safe?
     if (is_safe) {
-      std::print("{}, {}\n", report[0], report[1]);
       count++;
     }
   }
@@ -124,7 +141,7 @@ int Day2::solve_pt2() {
 }
 #define DOCTEST_CONFIG_IMPLEMENT
 #include "doctest.h"
-TEST_CASE("Testing the solutions") { // NOLINT
+TEST_CASE("Testing the solutions") {  // NOLINT
   Day2 d2("test/day2_test.txt");
   d2.parse();
   std::vector<std::vector<int>> in = {
@@ -141,9 +158,10 @@ int main() {
   Day2 d2("input/day2.txt");
   d2.parse();
 
-  std::println("==============================================================="
-               "================");
+  std::println(
+      "==============================================================="
+      "================");
   std::println("[Answers]");
   std::print("{}\n", d2.solve_pt1());
-//  std::print("{}\n", d2.solve_pt2());
+  std::print("{}\n", d2.solve_pt2());
 };
